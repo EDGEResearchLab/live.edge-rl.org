@@ -1,8 +1,6 @@
 The mission of Edge Research Lab is to expand humanity's knowledge of the physical world, encourage enthusiasm in STEM education, and practice efficient research through the novel application of existing technology where possible and the development of new technology where necessary.
 
-<p align="center">
 [![BEACON Promo Video](http://img.youtube.com/vi/JfN3A7kYax4/0.jpg)](https://www.youtube.com/watch?v=JfN3A7kYax4)
-</p>
 
 One way we can further this goal is to share flight information live and encourage contribution from the community of other organizations and STEM interested individuals.
 
