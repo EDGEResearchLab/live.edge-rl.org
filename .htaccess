@@ -1,0 +1,13 @@
+AddHandler application/x-httpd-php54s .php
+
+Options +ExecCGI
+AddHandler cgi-script .py .rb
+
+DirectoryIndex index.php index.html
+
+Options -Indexes
+
+RewriteEngine on
+RewriteCond %{HTTP_REFERER} !^http://*.edge-rl.org/.*$ [NC]
+RewriteCond %{HTTP_REFERER} !^http://*.edge-rl.org$ [NC]
+RewriteRule .*\.(sqlite3)$ - [F,NC]
