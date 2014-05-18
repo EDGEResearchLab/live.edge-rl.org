@@ -20,8 +20,8 @@ Otherwise, you will get a JSONArray of objects with the following keys:
 * `type_` - Type of VOR (Vortac, VOR/DME, NDB)
 * `frequency` - Operating frequency in the VHF band (108 - 117.95MHz)
 * `elevation` - Elevation in feet of the VOR AGL.
-* `lat` - Latitude in decimal degrees.
-* `lon` - Longitude in decimal degrees.
+* `latitude` - Latitude in decimal degrees.
+* `longitude` - Longitude in decimal degrees.
 * `distance` - Distance in nautical miles (as preferred by the FAA) from the provided GPS lat/lon and the vor.
 
 **Parameters**

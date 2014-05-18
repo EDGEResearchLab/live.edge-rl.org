@@ -31,8 +31,8 @@ class Vor:
     type_ = None
     frequency = None
     elevation = None
-    lat = None
-    lon = None
+    latitude = None
+    longitude = None
 
     def __init__(self, state, call, type_, frequency, elevation, lat, lon):
         self.state = state
@@ -40,8 +40,8 @@ class Vor:
         self.type_ = type_
         self.frequency = frequency
         self.elevation = elevation
-        self.lat = lat
-        self.lon = lon
+        self.latitude = lat
+        self.longitude = lon
 
     def __str__(self):
         return json.JSONEncoder().encode(self.__dict__)
