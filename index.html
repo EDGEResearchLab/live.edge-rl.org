@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <title>EDGE Research Lab | LIVE</title>
+
+        <meta name="description" content="EDGE Research Lab's Live tracking site based on GPS data with a live feed" />
+        <meta name="keywords" content="EDGE Research Lab, Scientific Research, Live Tracking, Development" />
+        <meta name="author" content="Matt Rasband; David Hughes" />
+
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="pragma" content="no-cache" />
+        <meta http-equiv="expires" content="-1" />
+
+        <link rel="stylesheet" type="text/css" href="css/main.css" />
+
+        <link rel="shortcut icon" type="shortcut icon" href="img/site/favicon.png" />
+
+        <!-- Libs -->
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+        <script type="test/javascript" src="js/chartjs/Chart.min.js"></script>
+        <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC7vrJH7vkDVOYp0mXB26VY7mSIR0qckhs&sensor=false&libraries=geometry"></script>
+        <!--script type="text/javascript" src="https://www.google.com/jsapi"></script--> <!-- Google Charts -->
+
+        <!-- EDGE-RL -->
+        <!--script type="text/javascript" src="js/efficientCharting.js"></script-->
+        <script type="text/javascript" src="js/liveCharting.js"></script>
+    </head>
+
+    <body>
+
+        <div id="container">
+            <div id="header">
+                <a href="http://www.edgeresearchlab.org"><img id="edgeLogo" src="img/site/edgeLogo-sm.png" alt="EDGE Research Lab" /></a>
+                    <div id="menu">
+                        <a href="http://live.edge-rl.org">LIVE</a> | 
+                        <a href="http://www.edgeresearchlab.org">EDGE</a> |
+                        <a href="vor/" target="_self">VOR</a>
+                    </div>
+                <div id="breakerLine"></div>
+            </div>
+        
+            <div id="mainContent">
+                <!--div id="mainLeft"></div-->
+                <div id="mainCenter">
+                        <div id="map_container">
+                            <div id="map_canvas"></div>
+                        </div>
+                    <div id="charts">
+                        <div id="altSpeedChart" onclick="forceDrawVisualization()" ></div>
+                    </div>
+                </div>
+                <div id="mainRight">
+                    <div id="infoGraphic">
+                        <img src="img/site/altitudeinfographic.png" alt="Infographic" />
+                    </div>
+                </div>
+                
+                <div id="copyright">
+                    <hr style="opacity: .35; margin: 15px auto;"/>
+                    &copy; 2013 EDGE-RL &amp; EDGE Research Lab <!--| <a href="">Contact</a-->
+                    <a href="http://www.youtube.com/user/EDGEResearchLab" target="_blank">  
+                        <img class="socialIcons" src="img/site/socialYouTube.png" alt="EDGE on YouTube!"/>
+                    </a>
+                    <a href="http://www.twitter.com/EDGEResearchLab" target="_blank">
+                        <img class="socialIcons" src="img/site/socialTwitter.png" alt="EDGE on Twitter!"/>
+                    </a>
+                </div>
+            </div>  
+        <div style="clear: both;"></div>
+        </div>
+
+    </body>
+</html>
