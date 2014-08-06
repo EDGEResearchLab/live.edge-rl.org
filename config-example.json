@@ -1,0 +1,9 @@
+{
+    "mongo": {
+        "host": "kahana.mongohq.com",
+        "port": "10082",
+        "db": "mydatabase",
+        "user": "myuser",
+        "pass": "myawesomepassword"
+    }
+}

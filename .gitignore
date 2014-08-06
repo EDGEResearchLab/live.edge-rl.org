@@ -1,0 +1,4 @@
+*.pyc
+.Python
+.DS_Store
+config.json
