@@ -11,9 +11,10 @@ class WebException(Exception):
 
 
 def endpoint(consumes=None, produces='text/plain'):
+    '''Decorator for any restful type of endpoints.'''
+
     media_type_json = 'application/json'
 
-    '''Decorator for any restful type of endpoints.'''
     def endpoint_decor(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
