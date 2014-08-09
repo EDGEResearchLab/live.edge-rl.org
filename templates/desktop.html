@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block page %}
+<div id="container">
+    <div id="header">
+        <a href="{{ url_for('index') }}">
+            <img id="edgeLogo" src="{{ url_for('static', filename='img/edgeLogo-sm.png') }}" alt="EDGE Research Lab" />
+        </a>
+            <div id="menu">
+                <a href="{{ url_for('index') }}">Live</a> |
+                <a href="{{ url_for('vor') }}" target="_self">Vor</a> | 
+                <a href="{{ url_for('predict') }}" target="_self">Predict</a> | 
+                <a href="http://www.edgeresearchlab.org">Edge</a>
+            </div>
+        <div id="breakerLine"></div>
+    </div>
+
+    <div id="mainContent">
+        {% block content %}
+        {% endblock %}
+        <div id="copyright">
+            <hr style="opacity: .35; margin: 15px auto;"/>
+            &copy; 2014 | <a href="{{ url_for('disclaim') }}">Disclaimer</a>
+            <a href="http://www.youtube.com/user/EDGEResearchLab" target="_blank">
+                <img class="socialIcons" src="{{ url_for('static', filename='img/socialYouTube.png') }}" alt="EDGE on YouTube!"/>
+            </a>
+            <a href="http://www.twitter.com/EDGEResearchLab" target="_blank">
+                <img class="socialIcons" src="{{ url_for('static', filename='img/socialTwitter.png') }}" alt="EDGE on Twitter!"/>
+            </a>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+</div>
+{% endblock %}

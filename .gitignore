@@ -2,3 +2,6 @@
 .Python
 .DS_Store
 config.json
+bin/
+include/
+lib/

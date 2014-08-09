@@ -1,6 +1,5 @@
-{% extends "layout.html" %}
+{% extends "desktop.html" %}
 {% block content %}
-<div id="mainContent">
     <div id="mainCenter">
         <div id="map_container">
             <div id="map_canvas"></div>
@@ -14,18 +13,5 @@
             <img src="{{ url_for('static', filename='img/altitudeinfographic.png') }}" alt="Infographic" />
             </div>
         </div>
-
-        <div id="copyright">
-            <hr style="opacity: .35; margin: 15px auto;"/>
-            &copy; 2014 | <a href="{{ url_for('disclaim') }}">Disclaimer</a>
-            <a href="http://www.youtube.com/user/EDGEResearchLab" target="_blank">
-                <img class="socialIcons" src="{{ url_for('static', filename='img/socialYouTube.png') }}" alt="EDGE on YouTube!"/>
-            </a>
-            <a href="http://www.twitter.com/EDGEResearchLab" target="_blank">
-                <img class="socialIcons" src="{{ url_for('static', filename='img/socialTwitter.png') }}" alt="EDGE on Twitter!"/> 
-            </a> 
-        </div>
     </div>
-    <div style="clear: both;"></div>
-</div>
 {% endblock %}

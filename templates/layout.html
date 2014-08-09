@@ -15,30 +15,22 @@
         <meta http-equiv="expires" content="-1" />
 
         <link rel="shortcut icon" type="shortcut icon" href="{{ url_for('static', filename='img/hot44.png') }}" />
+
+        {% if is_mobile %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile.css') }}" />
+        {% else %}
         <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+        {% endif %}
         
+        {% if js %}
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
         <script src="http://cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.16/socket.io.min.js"></script>
         <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC7vrJH7vkDVOYp0mXB26VY7mSIR0qckhs&sensor=false&libraries=geometry"></script>
-        {%if js %}
         <script src="{{ js }}"></script>
         {% endif %}
     </head>
     <body>
-        <div id="container">
-            <div id="header">
-                <a href="http://www.edgeresearchlab.org"><img id="edgeLogo" src="{{ url_for('static', filename='img/edgeLogo-sm.png') }}" alt="EDGE Research Lab" /></a>
-                    <div id="menu">
-                        <a href="{{ url_for('index') }}">Live</a> |
-                        <a href="{{ url_for('vor') }}" target="_self">Vor</a> | 
-                        <a href="{{ url_for('predict') }}" target="_self">Predict</a> | 
-                        <a href="http://www.edgeresearchlab.org">Edge</a>
-                    </div>
-                <div id="breakerLine"></div>
-            </div>
-
-            {% block content %}
-            {% endblock %}
-        </div>
+        {% block page %}
+        {% endblock %}
     </body>
 </html>
