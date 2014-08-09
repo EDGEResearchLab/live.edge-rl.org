@@ -8,16 +8,27 @@
         tbd
     @disclaimer
         /disclaimer
+
+    Payload minimum data to publish to the socket:
+        {
+            "id" : "identifier", // This is a correlation id, so something that tags points together in a relationship.
+            "points" : [
+                {
+                    "latitude" : 0,
+                    "longitude" : 0
+                }
+            ]
+        }
 '''
 
 from __future__ import print_function
 from flask import Flask, render_template, request, Response
 from flask.ext.socketio import SocketIO, emit
 import json
-from threading import Thread
-from time import sleep
 
 from edge.persistence import DBClient
+from edge import vor
+from edge.flaskies import endpoint, WebException
 
 
 CONFIG = json.load(open('config.json'))
@@ -32,14 +43,8 @@ dba = DBClient(**CONFIG['mongo'])
 @app.route('/index.html')
 @app.route('/live')
 def index():
-    '''Index page for the deployed site'''
-    return render_template('home.html', title=dba.latest_flight()['name'].upper(), js='static/js/tracking.js')
-
-
-@app.route('/vor')
-def vor():
-    '''Vor page'''
-    return render_template('home.html', title='Vor Tracking', js='static/js/vor.js')
+    '''Live tracking page'''
+    return render_template('home.html', title=dba.latest_flight()['name'], js='static/js/tracking.js')
 
 
 @app.route('/predict')
@@ -50,34 +55,55 @@ def predict():
 
 @app.route('/disclaimer')
 def disclaim():
-    '''Disclaimer page for the deployed site'''
+    '''Disclaimer page'''
     return render_template('disclaimer.html', title='EDGE Research Lab Disclaimer')
 
 
 @app.route('/mobile')
 def mobile():
-    '''Mobile site'''
+    '''Mobile page (stripped to the minimum required)'''
     return render_template('mobile.html', title='EDGE Mobile')
 
 
-# API Route
-@app.route('/satcom', methods=['POST'])
-def receive_satcom():
-    '''Getting up and going this is bootstrapped to give us the right format.'''
-    if request.headers['Content-Type'] != 'application/json':
-        return Response(status=400)
-    received_new_point(request.json)
-    return Response(status=200)
+@app.route('/vor', methods=['GET'])
+def vor():
+    '''Vor page'''
+    return render_template('home.html', title='Vor Tracking', js='static/js/vor.js')
 
 
-# API Route
-@app.route('/aprs', methods=['POST'])
-def receive_aprs():
-    '''Endpoint to receive APRS updates.'''
-    if request.headers['Content-Type'] != 'application/json':
-        return Response(json.dumps({'error' : 'Content type must be application/json'}, status=400, mimetype='application/json'))
-    received_new_point(request.json)
-    return Response(status=200)
+@app.route('/vor', methods=['POST'])
+@endpoint(consumes='application/json', produces='application/json')
+def vor_api():
+    '''Run the VOR goodies'''
+    return 200, {"message" : "hello"}
+
+
+# API Route: Receive a report (some type of tracking thing happened)
+@app.route('/report', methods=['POST'])
+@endpoint(consumes='application/json')
+def receive_report():
+    '''Receive a report on a trackable, verify that it's valid.'''
+    # Assume a successful result.
+    result_status = 200
+
+    if not 'Edge-Key' in request.headers or not request.headers['Edge-Key'] == CONFIG['secretkey']:
+        raise WebException("Unauthorized", 403)
+    elif not is_valid_payload(request.json):
+        raise WebException("Bad Request", 400)
+
+    if result_status == 200:
+        if received_new_point(request.json):
+            result_status = 201
+        else:
+            raise WebException("Conflict", 409)
+
+    return result_status
+
+
+@app.errorhandler(404)
+def not_found(error):
+    # return render_template('error.html'), 404
+    return "Page not found"
 
 
 @socketio.on('connect', namespace='/events')
@@ -85,13 +111,57 @@ def client_connected():
     '''On socket connection, all points for the
     most recent flight will be sent to the client.
     '''
-    emit('points', json.JSONEncoder().encode(dba.this_flights_points()))
+    # create a dict to use in formatting data for website consumption.
+    prep_dict = {}
+    for point in dba.this_flights_points():
+        point['_id'] = str(point['_id']) # convert ObjectID() to string
+        if not point['edge_id'] in prep_dict:
+            prep_dict[point['edge_id']] = {
+                'id' : point['edge_id'],
+                'points' : []
+            }
+        prep_dict[point['edge_id']]['points'].append(point)
+    # Serialize all the values from the dict (the keys were just used as a pseudo hash table)
+    emit('points', json.JSONEncoder().encode([v for v in prep_dict.values()]))
+
+
+def is_valid_payload(json_data):
+    '''Verify that the payload includes all necessary data for edge uses.'''
+    required_keys = [
+        'edge_id',
+        'latitude',
+        'longitude',
+        'altitude',
+        'speed',
+        'time',
+        'source'
+    ]
+    for key in required_keys:
+        # All keys are required
+        if key not in json_data:
+            return False
+        # And their data cannot be None or empty string.
+        elif json_data[key] is None or json_data[key] is '':
+            return False
+    return True
 
 
 def received_new_point(point):
-    '''stuff'''
-    # insert into db
-    socketio.emit('point', json.JSONEncoder().encode(point), namespace='/events')
+    '''Handle storing and saving the new point.'''
+    identifier = dba.save_tracking_point(point)
+    if identifier:
+        print(identifier, point)
+        point['_id'] = str(point['_id'])
+        emittable = {'id' : point['edge_id'], 'points' : [point]}
+        # broadcasts to all clients on /events
+        tell_all('point', emittable, '/events')
+        #socketio.emit('point', json.JSONEncoder().encode(emittable), namespace='/events')
+        return True
+    return False
+
+
+def tell_all(emit_type, emit_data, emit_namespace='/events'):
+    socketio.emit(emit_type, json.JSONEncoder().encode(emit_data), emit_namespace)
 
 
 if __name__ == '__main__':
