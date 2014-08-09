@@ -2,6 +2,13 @@ var map;
 var centerOnBalloon = true;
 var trackables = {}; // hash for identifier/poly for client updates
 var hasReceivedPoints = false;
+var debug = true;
+
+var logDebug = function(msg) {
+    if (debug) {
+        console.debug(msg);
+    }
+};
 
 $(document).ready(function() {
     // Setup the Google Map
@@ -32,66 +39,69 @@ var initSocketIo = function() {
 
 var handleOnConnect = function() {
     console.log('Connected to the EDGE-RL live stream.');
+
+    // Blow out the old stuff since all points are resent on new connection.
     for (var t in trackables) {
         t.clearPath();
     }
+    trackables = {};
 };
 
 var handleOnDisconnect = function() {
-    console.log('Disconnected form the EDGE-RL live stream.');
+    console.log('Disconnected from the EDGE-RL live stream.');
 };
 
 var handleInitialPoints = function(initial_points) {
-    console.debug("Loading initial points." + initial_points);
+    logDebug("Loading initial points.");
+
     try {
-        var points = JSON.parse(initial_points);
-        for (var uuid in points) {
-            console.debug("New trackable: " + uuid);
-            trackables[uuid] = new Trackable(map, getDefaultPolyOpts());
+        var tracker_points = JSON.parse(initial_points);
 
-            // Add all the points to the trackable.
-            for (var i = 0; i < points[uuid].length; i++) {
-                var thisPoint = points[uuid][i];
+        // we get an array of trackables, {"id" : "uuid", "points" : []}
+        for (var i = 0; i < tracker_points.length; i++) {
+            var thisTrackable = tracker_points[i];
+            var thisId = thisTrackable['id'];
+            var points = thisTrackable['points'];
 
-                // Set the map center to the first received point.
-                if (!hasReceivedPoints) {
-                    map.setCenter(new google.maps.LatLng(thisPoint['latitude'], thisPoint['longitude']));
-                    hasReceivedPoints = true;
-                }
-                
-                console.debug("Tracking point: " + JSON.stringify(thisPoint));
-                trackables[uuid].addPoint(thisPoint['latitude'], thisPoint['longitude']);
+            logDebug("New Trackable: " + thisId);
+            trackables[thisId] = new Trackable(map, getDefaultPolyOpts());
+
+            // and an array of points
+            for (var j = 0; j < points.length; j++) {
+                var thisPoint = points[j];
+                logDebug("Tracking point: " + JSON.stringify(thisPoint));
+                trackables[thisTrackable['id']].addPoint(thisPoint['latitude'], thisPoint['longitude']);
             }
         }
-    } catch (e) {
+
+    } catch (e) { 
         console.error(e);
     }
 };
 
 var handleNewPoint = function(point_content) {
     try {
-        var point = JSON.parse(point_content);
+        var thisTrackable = JSON.parse(point_content);
+        var thisId = thisTrackable['id'];
+        var points = thisTrackable['points'];
 
-        for (var uuid in point) {
-            if (!trackables[uuid]) {
-                console.debug("New trackable:" + uuid);
-                trackables[uuid] = new Trackable(map, getDefaultPolyOpts());
-            }
-
-            console.debug("New point for " + uuid);
-            var points = point[uuid];
-            for (var i = 0; i < points.length; i++) {
-                console.debug("Tracking Point: " + JSON.stringify(points[i]));
-                trackables[uuid].addPoint(points[i]['latitude'], points[i]['longitude']);
-            }
+        if (!trackables[thisId]) {
+            logDebug("New trackable: " + thisId);
+            trackables[thisId] = new Trackable(map, getDefaultPolyOpts());
         }
-    } catch(e) {
+
+        console.debug("New point for " + thisId);
+        for (var i = 0; i < points.length; i++) {
+            var thisPoint = points[i];
+            trackables[thisId].addPoint(thisPoint['latitude'], thisPoint['longitude']);
+        }
+    } catch (e) {
         console.error(e);
     }
 };
 
 var initMap = function(map_id, map_options) {
-    console.debug('Using map in #' + map_id + ".");
+    logDebug('Using map in #' + map_id + '.');
     var map_elem = $('#' + map_id).get(0);
     if (!map_elem) {
         console.error('Map Element not found.');
@@ -146,7 +156,6 @@ var createAutoCenterControl = function(gmap) {
 var getDefaultPolyOpts = function() {
     var opts = {
         strokeColor: generateRandomHexColor(),
-        //strokeColor: '#000000',
         strokeOpacity: 1.0,
         strokeWeight: 4
     };
@@ -159,7 +168,7 @@ var generateRandomHexColor = function() {
     for (var i = 0; i < 6; i++) {
         color += chars[Math.floor(Math.random() * (chars.length))];
     }
-    console.debug('Generated random color ' + color);
+    logDebug('Generated random color ' + color);
     return color;
 };
 
@@ -172,6 +181,12 @@ Trackable.prototype.addPoint = function(latitude, longitude) {
     var point = new google.maps.LatLng(latitude, longitude);
     var path = this.poly.getPath();
     path.push(point);
+
+    // Set the map's center to the first received point.
+    if (!hasReceivedPoints) {
+        this.gmap.setCenter(point);
+        hasReceivedPoints = true;
+    }
 };
 
 Trackable.prototype.clearPath = function() {
