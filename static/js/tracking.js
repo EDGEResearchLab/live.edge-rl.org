@@ -81,6 +81,7 @@ var handleInitialPoints = function(initial_points) {
 
 var handleNewPoint = function(point_content) {
     try {
+        logDebug("Received new point: " + point_content);
         var thisTrackable = JSON.parse(point_content);
         var thisId = thisTrackable['id'];
         var points = thisTrackable['points'];
