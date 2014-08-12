@@ -188,7 +188,7 @@ def is_valid_payload(json_data):
 
 def tell_all(emit_type, emit_data, emit_namespace='/events'):
     '''Broadcast the emit_data to all clients on the emit_namespace.'''
-    socketio.emit(emit_type, json.JSONEncoder().encode(emit_data), emit_namespace)
+    socketio.emit(emit_type, json.JSONEncoder().encode(emit_data), namespace=emit_namespace)
 
 
 def main():
