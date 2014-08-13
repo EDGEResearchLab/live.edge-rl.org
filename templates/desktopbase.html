@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block head %}
+    {% if title %}
+    <title>{{ title|upper }}</title>
+    {% else %}
+    <title>EDGE Live</title>
+    {% endif %}
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+
+    {% if js %}
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.16/socket.io.min.js"></script>
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC7vrJH7vkDVOYp0mXB26VY7mSIR0qckhs&sensor=false&libraries=geometry"></script>
+    <script src="{{ js }}"></script>
+    {% endif %}
+{% endblock %}
+{% block body %}
+<div id="container">
+    <header>
+        <a href="{{ url_for('index') }}">
+            <img id="edgeLogo" src="{{ url_for('static', filename='img/edgeLogo-sm.png') }}" alt="EDGE Research Lab" />
+        </a>
+        <div id="menu">
+            <a href="{{ url_for('index') }}">Live</a> |
+            <a href="{{ url_for('vor') }}" target="_self">Vor</a> | 
+            <a href="{{ url_for('predict') }}" target="_self">Predict</a> | 
+            <a href="http://www.edgeresearchlab.org">Edge</a> | 
+            <img src="{{ url_for('static', filename='img/status_error.png') }}" class="statusIcon" title="Not Connected" />
+        </div>
+    </header>
+
+    <section id="main_content">
+        {% block maincontent %}
+        <h1>Stuff here</h1>
+        {% endblock %}
+    </section>
+
+    <footer>
+        <div>
+            &copy; 2014 | <a href="{{ url_for('disclaim') }}">Disclaimer</a>
+        </div>
+        <div>
+            <a href="http://www.youtube.com/user/EDGEResearchLab" target="_blank">
+                <img class="socialIcons" src="{{ url_for('static', filename='img/socialYouTube.png') }}" alt="EDGE on YouTube!"/>
+            </a>
+            <a href="http://www.twitter.com/EDGEResearchLab" target="_blank">
+                <img class="socialIcons" src="{{ url_for('static', filename='img/socialTwitter.png') }}" alt="EDGE on Twitter!"/>
+            </a>
+            <a href="http://www.github.com/EDGEResearchLab" target="_blank">
+                <img class="socialIcons github" src="{{ url_for('static', filename='img/socialGithub.png') }}" alt="EDGE on GitHub"/>
+            </a>
+        </div>
+        <div style="clear: both;"></div>
+    </footer>
+</div>
+{% endblock %}

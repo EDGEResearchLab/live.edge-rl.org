@@ -1,0 +1,16 @@
+{% extends "desktopbase.html" %}
+{% block maincontent %}
+<div id="mainCenter">
+    <div id="map_container">
+        <div id="map_canvas"></div>
+    </div>
+    <div id="charts">
+        <div id="altSpeedChart" onclick=""></div>
+    </div>
+</div>
+<div id="mainRight">
+    <div id="infoGraphic">
+        <img src="{{ url_for('static', filename='img/altitudeinfographic.png') }}" alt="Infographic" />
+    </div>
+</div>
+{% endblock %}
