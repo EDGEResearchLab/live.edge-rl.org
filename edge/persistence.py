@@ -31,8 +31,12 @@ class DBClient:
         cur = self.tracking_collection.find(filters).sort('transmit_time')
         return [x for x in cur]
 
-    def get_vor_points(self, filters=dict()):
-        cur = self.vor_collection.find(filters)
+    def get_vor_documents(self, filter=dict(), projection=None):
+        '''Get the VOR documents according to the filter and projection.
+        @param filter: Dictionary filtering the query
+        @param projection: Enable/disable fields ("rows") to get.
+        '''
+        cur = self.vor_collection.find(filter, projection)
         return [x for x in cur]
 
     def specific_flights_points(self, flightname):

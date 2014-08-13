@@ -30,7 +30,6 @@ import threading
 import time
 
 from edge import gps
-from edge.collections import filter_dict
 from edge.flaskies import endpoint, WebException
 from edge.persistence import DBClient
 from edge.service import SubscriptionService
@@ -160,13 +159,17 @@ def vor_new_point_handler(point, *args, **kwargs):
     activities.
     '''
     def runnable(point):
-        keys_to_strip = ['elevation', 'state', 'frequency', '_id', 'type']
-
         point_latlng = (point['latitude'], point['longitude'])
 
         # rank the vors based on distance
         vor_rankings = []
-        for vor in dba.get_vor_points():
+        projection = {
+            '_id': 0,
+            'latitude': 1,
+            'longitude': 1,
+            'call': 1
+        }
+        for vor in dba.get_vor_documents(projection=projection):
             vor_latlng = (vor['latitude'], vor['longitude'])
             vor['distance'] = gps.distance_between(point_latlng, vor_latlng)
             vor_rankings.append(vor)
@@ -188,7 +191,7 @@ def vor_new_point_handler(point, *args, **kwargs):
         for ranking in vor_rankings:
             lat_lng = (ranking['latitude'], ranking['longitude'])
             ranking['bearing'] = gps.bearing(point_latlng, lat_lng)
-            emittable['vors'].append(filter_dict(ranking, keys_to_strip))
+            emittable['vors'].append(ranking)
 
         # Publish the update.
         tell_all('point', emittable, '/vor')
@@ -235,6 +238,7 @@ def tell_all(emit_type, emit_data, emit_namespace='/events'):
 
 
 def main():
+    # Set up all the known parties interested in point updates
     point_subscribers = [
         tracker_new_point_handler,
         vor_new_point_handler,
@@ -245,7 +249,7 @@ def main():
 
     print('Server started on localhost:5000')
     socketio.run(app)
-    # app.run(debug=True)
+
 
 if __name__ == '__main__':
     main()
