@@ -26,11 +26,13 @@ from __future__ import print_function
 from flask import Flask, render_template, request
 from flask.ext.socketio import SocketIO, emit
 import json
+import threading
 import time
 
-from edge.persistence import DBClient
-from edge import vor
+from edge import gps
+from edge.collections import filter_dict
 from edge.flaskies import endpoint, WebException
+from edge.persistence import DBClient
 from edge.service import SubscriptionService
 
 
@@ -51,19 +53,19 @@ SubscriptionService.create_topic(POINT_RECEIPT_TOPIC)
 @app.route('/live')
 def index():
     '''Live tracking page'''
-    return render_template('home.html', title=dba.latest_flight()['name'], js='static/js/tracking.js')
+    return render_template('live.html', title=dba.latest_flight()['name'], js='static/js/tracking.js')
 
 
 @app.route('/vor')
 def vor():
     '''Vor page'''
-    return render_template('home.html', title='Vor Tracking', js='static/js/vor.js')
+    return render_template('live.html', title='Vor Tracking', js='static/js/vor.js')
 
 
 @app.route('/predict')
 def predict():
     '''Predictive landing page'''
-    return render_template('home.html', title='Predictive Landing', js='static/js/predict.js')
+    return render_template('live.html', title='Predictive Landing', js='static/js/predict.js')
 
 
 @app.route('/mobile')
@@ -82,15 +84,18 @@ def disclaim():
 @app.route('/report', methods=['POST'])
 @endpoint(consumes='application/json')
 def receive_report():
-    '''Receive a report on a trackable, verify that it's valid.'''
+    '''Receive a report on a trackable, verify that it's valid
+    and broadcast it if so.
+    '''
     # # Assume a successful result.
     # if not 'Edge-Key' in request.headers \
     # or not request.headers['Edge-Key'] == CONFIG['secretkey']:
     #     raise WebException("Unauthorized", 403)
     if not is_valid_payload(request.json):
-        raise WebException("Bad Request", 400)
+        raise WebException('Bad Request', 400)
 
     payload = request.json
+    # use UTC, seconds since epoch
     payload['receipt_time'] = int(time.time())
 
     # Save the point to the payload
@@ -103,7 +108,7 @@ def receive_report():
         }
         SubscriptionService.broadcast(POINT_RECEIPT_TOPIC, point=emittable)
     else:
-        raise WebException("Conflict", 409)
+        raise WebException('Conflict', 409)
 
     return 201, None
 
@@ -151,10 +156,48 @@ def tracker_new_point_handler(point, *args, **kwargs):
 
 def vor_new_point_handler(point, *args, **kwargs):
     '''Handler for sending new points to VOR interested
-    parties.
+    parties. Threads out the calcs to not block server
+    activities.
     '''
-    # TODO - Run calc, publish result.
-    tell_all('point', point, '/vor')
+    def runnable(point):
+        keys_to_strip = ['elevation', 'state', 'frequency', '_id', 'type']
+
+        point_latlng = (point['latitude'], point['longitude'])
+
+        # rank the vors based on distance
+        vor_rankings = []
+        for vor in dba.get_vor_points():
+            vor_latlng = (vor['latitude'], vor['longitude'])
+            vor['distance'] = gps.distance_between(point_latlng, vor_latlng)
+            vor_rankings.append(vor)
+
+        # TODO - Maybe publish an alert?
+        if len(vor_rankings) < 2:
+            return
+
+        # the faa cares about the closest 2
+        vor_rankings = sorted(vor_rankings, key=lambda k: k['distance'])[:2]
+
+        emittable = {
+            'vors': [],
+            'point': point
+        }
+
+        # calculate the bearing on the only 2 we care about
+        # and filter out stuff that we don't need to send to the client
+        for ranking in vor_rankings:
+            lat_lng = (ranking['latitude'], ranking['longitude'])
+            ranking['bearing'] = gps.bearing(point_latlng, lat_lng)
+            emittable['vors'].append(filter_dict(ranking, keys_to_strip))
+
+        # Publish the update.
+        tell_all('point', emittable, '/vor')
+
+    # If the point is as expected and there is data, use the latest point.
+    # The operation is sent to the background to not block.
+    if 'points' in point and len(point['points']) > 0:
+        thread = threading.Thread(target=runnable, args=(point['points'][-1],))
+        thread.start()
 
 
 def prediction_new_point_handler(point, *args, **kwargs):
@@ -202,6 +245,7 @@ def main():
 
     print('Server started on localhost:5000')
     socketio.run(app)
+    # app.run(debug=True)
 
 if __name__ == '__main__':
     main()
