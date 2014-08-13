@@ -52,19 +52,25 @@ SubscriptionService.create_topic(POINT_RECEIPT_TOPIC)
 @app.route('/live')
 def index():
     '''Live tracking page'''
-    return render_template('live.html', title=dba.latest_flight()['name'], js=['static/js/map.js', 'static/js/live.js'])
+    page_title = dba.latest_flight()['name']
+    java_scripts = ['static/js/map.js', 'static/js/live.js']
+    return render_template('live.html', title=page_title, js=java_scripts)
 
 
 @app.route('/vor')
 def vor():
     '''Vor page'''
-    return render_template('vor.html', title='Vor Tracking', js=['static/js/tracking.js'])
+    page_title = 'Vor Tracking'
+    java_scripts = ['static/js/map.js', 'static/js/vor.js']
+    return render_template('vor.html', title=page_title, js=java_scripts)
 
 
 @app.route('/predict')
 def predict():
     '''Predictive landing page'''
-    return render_template('live.html', title='Predictive Landing', js=['static/js/predict.js'])
+    page_title = 'Predictive Landing'
+    java_scripts = ['static/js/tracking.js']
+    return render_template('live.html', title=page_title, js=java_scripts)
 
 
 @app.route('/mobile')
@@ -77,7 +83,7 @@ def mobile():
 @app.route('/disclaimer')
 def disclaim():
     '''Disclaimer page'''
-    return render_template('disclaimer.html', title='EDGE Research Lab Disclaimer')
+    return render_template('disclaimer.html', title='EDGE Disclaimer')
 
 
 @app.route('/report', methods=['POST'])
@@ -97,7 +103,7 @@ def receive_report():
     # use UTC, seconds since epoch
     payload['receipt_time'] = int(time.time())
 
-    # Save the point to the payload
+    # Save the point to the database, if success - an ID is returned
     identifier = dba.save_tracking_point(payload)
     if identifier:
         payload['_id'] = str(payload['_id'])  # Convert ObjectId to string
@@ -126,6 +132,7 @@ def client_connected():
                 'id': point['edge_id'],
                 'points': []
             }
+        point = prep_payload_for_publish(point)
         prep_dict[point['edge_id']]['points'].append(point)
     # Serialize all the values from the dict
     # Only send it to the new client.
@@ -137,8 +144,9 @@ def vor_client_connected():
     '''On socket connection for the VOR site, only
     the most recent point with VOR info will be sent.
     '''
-    # TODO
-    pass
+    current_flights_points = dba.this_flights_points()
+    if len(current_flights_points) > 0:
+        vor_new_point_handler(point={'points': [current_flights_points[-1]]})
 
 
 @socketio.on('connect', namespace='/predict')
@@ -163,13 +171,21 @@ def vor_new_point_handler(point, *args, **kwargs):
 
         # rank the vors based on distance
         vor_rankings = []
+        # For most EDGE uses, the only VORs hit will be
+        # in these states.
+        filters = {
+            'state': {
+                '$in': ['CO', 'KS', 'NE']
+            }
+        }
+        # Limit the 'rows' from the DB
         projection = {
             '_id': 0,
             'latitude': 1,
             'longitude': 1,
             'call': 1
         }
-        for vor in dba.get_vor_documents(projection=projection):
+        for vor in dba.get_vor_documents(filter=filters, projection=projection):
             vor_latlng = (vor['latitude'], vor['longitude'])
             vor['distance'] = gps.distance_between(point_latlng, vor_latlng)
             vor_rankings.append(vor)
@@ -183,7 +199,7 @@ def vor_new_point_handler(point, *args, **kwargs):
 
         emittable = {
             'vors': [],
-            'point': point
+            'point': prep_payload_for_publish(point)
         }
 
         # calculate the bearing on the only 2 we care about
@@ -208,7 +224,8 @@ def prediction_new_point_handler(point, *args, **kwargs):
     parties.
     '''
     # TODO - Run calc, publish result.
-    tell_all('point', point, '/predict')
+    # tell_all('point', point, '/predict')
+    pass
 
 
 def is_valid_payload(json_data):
@@ -230,6 +247,20 @@ def is_valid_payload(json_data):
         elif json_data[key] is None or json_data[key] is '':
             return False
     return True
+
+
+def prep_payload_for_publish(payload):
+    '''Strip out anything that doesn't need to/shouldn't be sent
+    to the client'''
+    strip_these_fields = [
+        '_id',
+        'receipt_time',
+        'source'
+    ]
+    for key in payload.keys():
+        if key in strip_these_fields:
+            del payload[key]
+    return payload
 
 
 def tell_all(emit_type, emit_data, emit_namespace='/events'):
