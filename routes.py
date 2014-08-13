@@ -53,19 +53,19 @@ SubscriptionService.create_topic(POINT_RECEIPT_TOPIC)
 @app.route('/live')
 def index():
     '''Live tracking page'''
-    return render_template('live.html', title=dba.latest_flight()['name'], js='static/js/tracking.js')
+    return render_template('live.html', title=dba.latest_flight()['name'], js=['static/js/map.js', 'static/js/live.js'])
 
 
 @app.route('/vor')
 def vor():
     '''Vor page'''
-    return render_template('live.html', title='Vor Tracking', js='static/js/vor.js')
+    return render_template('vor.html', title='Vor Tracking', js=['static/js/tracking.js'])
 
 
 @app.route('/predict')
 def predict():
     '''Predictive landing page'''
-    return render_template('live.html', title='Predictive Landing', js='static/js/predict.js')
+    return render_template('live.html', title='Predictive Landing', js=['static/js/predict.js'])
 
 
 @app.route('/mobile')

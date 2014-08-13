@@ -12,7 +12,9 @@
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="http://cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.16/socket.io.min.js"></script>
     <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC7vrJH7vkDVOYp0mXB26VY7mSIR0qckhs&sensor=false&libraries=geometry"></script>
-    <script src="{{ js }}"></script>
+    {% for j in js %}
+    <script src="{{ j }}"></script>
+    {% endfor %}
     {% endif %}
 {% endblock %}
 {% block body %}
@@ -26,7 +28,7 @@
             <a href="{{ url_for('vor') }}" target="_self">Vor</a> | 
             <a href="{{ url_for('predict') }}" target="_self">Predict</a> | 
             <a href="http://www.edgeresearchlab.org">Edge</a> | 
-            <img src="{{ url_for('static', filename='img/status_error.png') }}" class="statusIcon" title="Not Connected" />
+            <img src="{{ url_for('static', filename='img/status_error.png') }}" id="statusIcon" class="statusIcon" title="Not Connected" />
         </div>
     </header>
 
