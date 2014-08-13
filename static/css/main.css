@@ -140,3 +140,11 @@ a:hover {
             float: right;
             margin-top: 2px;
         }
+
+/*
+    VOR Specifics
+*/
+#vor_center {
+    width: 75%;
+    margin: 0 auto;
+}
