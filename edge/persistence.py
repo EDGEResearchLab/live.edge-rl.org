@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 
+
 class DBClient:
     def __init__(self, server, port, database, username, password):
         login_format = {
@@ -31,12 +32,12 @@ class DBClient:
         cur = self.tracking_collection.find(filters).sort('transmit_time')
         return [x for x in cur]
 
-    def get_vor_documents(self, filter=dict(), projection=None):
-        '''Get the VOR documents according to the filter and projection.
-        @param filter: Dictionary filtering the query
-        @param projection: Enable/disable fields ("rows") to get.
+    def get_vor_documents(self, filters=dict(), projections=None):
+        '''Get the VOR documents according to the filters and projections.
+        @param filters: Dictionary filtering the query
+        @param projections: Enable/disable fields ("rows") to get.
         '''
-        cur = self.vor_collection.find(filter, projection)
+        cur = self.vor_collection.find(filters, projections)
         return [x for x in cur]
 
     def specific_flights_points(self, flightname):

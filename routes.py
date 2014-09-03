@@ -8,20 +8,7 @@
         tbd
     @disclaimer
         /disclaimer
-
-    Payload minimum data to publish to the socket:
-        {
-            "id" : "identifier", // This is a correlation id, so something
-            //that tags points together in a relationship.
-            "points" : [
-                {
-                    "latitude" : 0,
-                    "longitude" : 0
-                }
-            ]
-        }
 '''
-
 from __future__ import print_function
 from flask import Flask, render_template, request
 from flask.ext.socketio import SocketIO, emit
@@ -33,7 +20,6 @@ from edge import gps
 from edge.flaskies import endpoint, WebException
 from edge.persistence import DBClient
 from edge.service import SubscriptionService
-
 
 CONFIG = json.load(open('config.json'))
 POINT_RECEIPT_TOPIC = 'point_received'
@@ -53,7 +39,7 @@ SubscriptionService.create_topic(POINT_RECEIPT_TOPIC)
 def index():
     '''Live tracking page'''
     page_title = dba.latest_flight()['name']
-    java_scripts = ['static/js/map.js', 'static/js/live.js']
+    java_scripts = ['static/js/common.js', 'static/js/map.js', 'static/js/live.js']
     return render_template('live.html', title=page_title, js=java_scripts)
 
 
@@ -61,7 +47,7 @@ def index():
 def vor():
     '''Vor page'''
     page_title = 'Vor Tracking'
-    java_scripts = ['static/js/map.js', 'static/js/vor.js']
+    java_scripts = ['static/js/common.js', 'static/js/map.js', 'static/js/vor.js']
     return render_template('vor.html', title=page_title, js=java_scripts)
 
 
@@ -69,7 +55,7 @@ def vor():
 def predict():
     '''Predictive landing page'''
     page_title = 'Predictive Landing'
-    java_scripts = ['static/js/tracking.js']
+    java_scripts = ['static/js/common.js', 'static/js/tracking.js']
     return render_template('live.html', title=page_title, js=java_scripts)
 
 
@@ -171,21 +157,22 @@ def vor_new_point_handler(point, *args, **kwargs):
 
         # rank the vors based on distance
         vor_rankings = []
-        # For most EDGE uses, the only VORs hit will be
-        # in these states.
+        # For most EDGE uses, the only VORs hit will be in
+        # around CO (or nearby)
         filters = {
             'state': {
                 '$in': ['CO', 'KS', 'NE']
             }
         }
-        # Limit the 'rows' from the DB
+        # Limit the 'rows' from the DB, similar to
+        # Select latitude,longitude,call from ...
         projection = {
             '_id': 0,
             'latitude': 1,
             'longitude': 1,
             'call': 1
         }
-        for vor in dba.get_vor_documents(filter=filters, projection=projection):
+        for vor in dba.get_vor_documents(filters=filters, projections=projection):
             vor_latlng = (vor['latitude'], vor['longitude'])
             vor['distance'] = gps.distance_between(point_latlng, vor_latlng)
             vor_rankings.append(vor)
@@ -239,8 +226,8 @@ def is_valid_payload(json_data):
         'time',
         'source'
     ]
+    # Verify that all keys ^ are included.
     for key in required_keys:
-        # All keys are required
         if key not in json_data:
             return False
         # And their data cannot be None or empty string.
